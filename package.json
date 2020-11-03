@@ -1,0 +1,21 @@
+{
+  "name": "create-nexus-tpl",
+  "version": "1.0.0",
+  "description": "Create nexus template from Prisma2 schema ",
+  "main": "src/cli.js",
+  "repository": "https://github.com/Mark-Panda/createNexusTpl.git",
+  "author": "simple",
+  "license": "MIT",
+  "scripts": {
+    "dev": "node src/cli.js --sl --mq -c -f -o --cn --js"
+  },
+  "dependencies": {
+    "@paljs/schema": "1.1.0",
+    "arg": "^4.1.2",
+    "pluralize": "^8.0.0",
+    "prettier": "^2.0.5"
+  },
+  "files": [
+    "src"
+  ]
+}

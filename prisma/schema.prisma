@@ -1,0 +1,78 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model User {
+  id          String      @default(cuid()) @id
+  createdAt   DateTime    @default(now())
+  description String?
+  email       String?
+  expired     Float?
+  name        String?
+  password    String?
+  person      Person[]
+  rfid        String?     @map("RFID")
+  role        String
+  status      String
+  updatedAt   DateTime    @updatedAt
+  userGroup   UserGroup[]
+}
+
+model UserGroup {
+  id          String       @default(cuid()) @id
+  code        String?
+  createdAt   DateTime     @default(now())
+  description String?
+  name        String?
+  updatedAt   DateTime     @updatedAt
+  user        User[]
+}
+
+model Organize {
+  id          String     @default(cuid()) @id
+  code        String?
+  createdAt   DateTime   @default(now())
+  description String?
+  name        String?
+  Organize    Organize[] @relation("OrganizeOneToManyRelation")
+  organize    Organize[] @relation("OrganizeOneToManyRelation")
+  person      Person[]
+  type        String
+  updatedAt   DateTime   @updatedAt
+}
+
+model Person {
+  id          String     @default(cuid()) @id
+  avatar      String?
+  birthday    DateTime
+  code        String?
+  createdAt   DateTime   @default(now())
+  description String?
+  mobile      String?
+  name        String?
+  organize    Organize[]
+  sex         String
+  status      String?
+  updatedAt   DateTime   @updatedAt
+  user        User[]
+}
+
+model Menu {
+  id          String        @default(cuid()) @id
+  code        String?
+  createdAt   DateTime      @default(now())
+  description String?
+  enable      Boolean
+  i18N        String?
+  icon        String?
+  menu        Menu[]        @relation("MenuOneToManyRelation")
+  Menu        Menu[]        @relation("MenuOneToManyRelation")
+  menuType    String
+  name        String?
+  orderNo     Int?
+  updatedAt   DateTime      @updatedAt
+  url         String?
+}
+
