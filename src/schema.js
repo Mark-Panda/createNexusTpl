@@ -4,64 +4,57 @@ const fs = require('fs');
 
 function buildForSchemaVersionNew(schema, args) {
 
-    let index = '';
-    const dir = args['--outDir'] + '/';
-    let moduleExports = '';
-    schema.models.forEach((model) => {
-        // console.log('-----SCHAME--', model);
+  let index = '';
+  const dir = args['--outDir'] + '/';
+  let moduleExports = '';
+  schema.models.forEach((model) => {
 
 
 
 
 
-        let fileContent = '';
-        if (args['--js']) {
-            index += `...require('./${model.name}'),`;
-        } else {
-            index += `export * from './${model.name}';`;
-        }
-        fileContent = `${args['--js'] ? 'const' : 'import'} { inputObjectType, objectType${args['--mq'] || args['-q'] || args['-m'] ? ', extendType' : ''
-            } } ${args['--js'] ? `= require('@nexus/schema')` : ` from '@nexus/schema'`
-            };
+    let fileContent = '';
+    if (args['--js']) {
+      index += `...require('./${model.name}'),`;
+    } else {
+      index += `export * from './${model.name}';`;
+    }
+    fileContent = `${args['--js'] ? 'const' : 'import'} { inputObjectType, objectType${args['--mq'] || args['-q'] || args['-m'] ? ', extendType' : ''
+      } } ${args['--js'] ? `= require('@nexus/schema')` : ` from '@nexus/schema'`
+      };
       
             `;
-        fileContent += `const { SortOrder } = require('../prismaContext/public');
+    fileContent += `const { SortOrder } = require('../prismaContext/public');
         
         `;
 
-        fileContent += `${args['--js'] ? '' : 'export '}const ${model.name} = objectType({
+    fileContent += `${args['--js'] ? '' : 'export '}const ${model.name} = objectType({
             name: '${model.name}',
             definition(t) {`;
-        moduleExports = `	${model.name},`;
-        model.fields.forEach((field) => {
-            fileContent += `
+    moduleExports = `	${model.name},`;
+    model.fields.forEach((field) => {
+      fileContent += `
                             t.model.${field.name}()`;
-        });
-        fileContent += `
+    });
+    fileContent += `
             },
             });
             
             `;
 
 
-        // fileContent += `const ${model.name}SortOrder = enumType({
-        //     name: 'SortOrder',
-        //     members: ['asc', 'desc'],
-        //     description: 'Schema Order By ASC OR DESC',
-        // });
-
-        // `;
 
 
-        fileContent += `${args['--js'] ? '' : 'export '}const InputType = inputObjectType({
+
+    fileContent += `${args['--js'] ? '' : 'export '}const InputType = inputObjectType({
                         name: '${model.name}OrderByInput',
                         definition(t) {`;
-        moduleExports = `	${model.name},`;
-        model.fields.forEach((field) => {
-            fileContent += `
+    moduleExports = `	${model.name},`;
+    model.fields.forEach((field) => {
+      fileContent += `
                                     t.field('${field.name}',{ type: SortOrder })`;
-        });
-        fileContent += `
+    });
+    fileContent += `
         },
         });
         
@@ -69,25 +62,25 @@ function buildForSchemaVersionNew(schema, args) {
 
 
 
-        const newName = model.name.charAt(0).toLowerCase() + model.name.slice(1);
-        const namePlural = model.name.charAt(0).toUpperCase() + model.name.slice(1);
-        const modelName = {
-            plural: pluralize(newName),
-            singular: newName,
-            newPlural: pluralize(namePlural)
-        };
+    const newName = model.name.charAt(0).toLowerCase() + model.name.slice(1);
+    const namePlural = model.name.charAt(0).toUpperCase() + model.name.slice(1);
+    const modelName = {
+      plural: pluralize(newName),
+      singular: newName,
+      newPlural: pluralize(namePlural)
+    };
 
-        let AggregateType = ''
-        let argsAggre = ''
-        for (let item of model.fields) {
-            if (item.type === 'Int' || item.type === 'Float') {
-                argsAggre += `t.field('${item.name}', { type: 'Boolean' })
+    let AggregateType = ''
+    let argsAggre = ''
+    for (let item of model.fields) {
+      if (item.type === 'Int' || item.type === 'Float') {
+        argsAggre += `t.field('${item.name}', { type: 'Boolean' })
         `
 
-            }
-        }
-        if (argsAggre != '') {
-            AggregateType = `const ${modelName.singular}AggreType = inputObjectType({
+      }
+    }
+    if (argsAggre != '') {
+      AggregateType = `const ${modelName.singular}AggreType = inputObjectType({
         name: '${modelName.singular}AggreByInput',
         definition(t) {
           `+ argsAggre + `
@@ -95,30 +88,27 @@ function buildForSchemaVersionNew(schema, args) {
       });
       
       `;
-        }
+    }
 
-        fileContent += AggregateType
-        // console.log('----fileContent', fileContent);
-        // console.log('-----AggregateType', AggregateType);
-        // console.log('---MODELNAME--', modelName);
-        let queryCount = ''
-        let queryConnect = ''
-        let queryBase = ''
-        let queryBases = ''
-        let queryAggregate = ''
+    fileContent += AggregateType
+    let queryCount = ''
+    let queryConnect = ''
+    let queryBase = ''
+    let queryBases = ''
+    let queryAggregate = ''
 
 
-        if (args['--cn']) {
-            queryBase = `t.field('${modelName.singular}', {
+    if (args['--cn']) {
+      queryBase = `t.field('${modelName.singular}', {
                 type: '${model.name}',
                 args: {
-                  where: '${model.name}WhereInput',
+                  where: '${model.name}WhereUniqueInput',
                 },
                 async resolve(_root, args, ctx) {
                   return await ctx.prisma.${modelName.singular}.findOne(args);
                 },
               })`
-            queryBases = `t.list.field('${modelName.plural}', {
+      queryBases = `t.list.field('${modelName.plural}', {
                 type: '${model.name}',
                 args: {
                   where: '${model.name}WhereInput',
@@ -140,14 +130,14 @@ function buildForSchemaVersionNew(schema, args) {
                   return await ctx.prisma.${modelName.singular}.findMany(argsNew);
                 },
               })`
-        }
+    }
 
 
 
 
 
-        if (args['-c']) {
-            queryCount = `
+    if (args['-c']) {
+      queryCount = `
       t.field('${modelName.plural}Count', {
         type: 'Int',
         args: {
@@ -157,10 +147,10 @@ function buildForSchemaVersionNew(schema, args) {
           return ctx.prisma.${modelName.singular}.count(args)
         },
       })`;
-        }
+    }
 
-        if (args['--cn']) {
-            queryConnect = `
+    if (args['--cn']) {
+      queryConnect = `
       t.list.field('${modelName.plural}Connection',{
         type: '${model.name}',
         args: {
@@ -185,10 +175,10 @@ function buildForSchemaVersionNew(schema, args) {
       })`;
 
 
-        }
+    }
 
-        if (AggregateType != '') {
-            queryAggregate = `
+    if (AggregateType != '') {
+      queryAggregate = `
       t.field('${modelName.plural}Aggregate', {
         type: 'Float',
         args: {
@@ -220,10 +210,10 @@ function buildForSchemaVersionNew(schema, args) {
         },
       })
       `
-        }
+    }
 
-        if (args['--mq'] || args['-q']) {
-            fileContent += `
+    if (args['--mq'] || args['-q']) {
+      fileContent += `
 
 ${args['--js'] ? '' : 'export '}const ${modelName.singular}Query = extendType({
   type: 'Query',
@@ -236,14 +226,14 @@ ${queryConnect}
 ${queryAggregate}
   },
 })`;
-            moduleExports += `
+      moduleExports += `
 	${modelName.singular}Query,`;
-        }
-        if (args['--mq'] || args['-m']) {
-            fileContent += `
+    }
+    if (args['--mq'] || args['-m']) {
+      fileContent += `
 
 ${args['--js'] ? '' : 'export '}const ${modelName.singular
-                }Mutation = extendType({
+        }Mutation = extendType({
   type: 'Mutation',
   definition(t) {
 
@@ -268,33 +258,33 @@ ${args['--js'] ? '' : 'export '}const ${modelName.singular
     })
   },
 })`;
-            moduleExports += `
+      moduleExports += `
 	${modelName.singular}Mutation,`;
-        }
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
-        if (args['--js']) {
-            fileContent += `
+    }
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+    }
+    if (args['--js']) {
+      fileContent += `
 module.exports = {
 ${moduleExports}
 }`;
-        }
-        fs.writeFile(
-            dir + model.name + (args['--js'] || args['--mjs'] ? '.js' : '.ts'),
-            format(fileContent, args['--js'] || args['--mjs']),
-            () => { }
-        );
-    });
-    if (args['--js']) {
-        index = `module.exports = {
-${index}}`;
     }
     fs.writeFile(
-        dir + `index.${args['--js'] || args['--mjs'] ? 'js' : 'ts'}`,
-        format(index, args['--js'] || args['--mjs']),
-        () => { }
+      dir + model.name + (args['--js'] || args['--mjs'] ? '.js' : '.ts'),
+      format(fileContent, args['--js'] || args['--mjs']),
+      () => { }
     );
+  });
+  if (args['--js']) {
+    index = `module.exports = {
+${index}}`;
+  }
+  fs.writeFile(
+    dir + `index.${args['--js'] || args['--mjs'] ? 'js' : 'ts'}`,
+    format(index, args['--js'] || args['--mjs']),
+    () => { }
+  );
 }
 
 module.exports = buildForSchemaVersionNew;
